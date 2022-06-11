@@ -11,11 +11,15 @@ class HitCounter(Construct):
     def handler(self):
         return self._handler
 
+    @property
+    def table(self):
+        return self._table
+
     def __init__(self, scope: "Construct", id: str, downstream:
         _lambda.IFunction, **kwargs):
         super().__init__(scope, id, **kwargs)
 
-        table = ddb.Table(
+        self._table = ddb.Table(
             self, 'Hits',
             partition_key={'name': 'path', 'type':
             ddb.AttributeType.STRING}
@@ -29,10 +33,10 @@ class HitCounter(Construct):
             environment={
                 'DOWNSTREAM_FUNCTION_NAME':
                 downstream.function_name,
-                'HITS_TABLE_NAME': table.table_name,
+                'HITS_TABLE_NAME': self._table.table_name,
             }
         )
         
-        table.grant_read_write_data(self.handler)
+        self._table.grant_read_write_data(self.handler)
         downstream.grant_invoke(self.handler)
 
